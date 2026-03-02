@@ -115,7 +115,11 @@ async def _sync(output: str, concurrency: int, dry_run: bool):
 
     try:
         async with httpx.AsyncClient(
-            headers={"Authorization": f"Bearer {token.access_token}"},
+            headers={
+                "Authorization": f"Bearer {token.access_token}",
+                "Origin": "https://gopro.com",
+                "Referer": "https://gopro.com/",
+            },
             timeout=httpx.Timeout(30, read=300),
         ) as client:
             # Phase 1: List all media from cloud

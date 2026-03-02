@@ -8,6 +8,24 @@ from .models import MediaItem
 
 BASE_URL = "https://api.gopro.com"
 
+SEARCH_HEADERS = {
+    "Accept": "application/vnd.gopro.jk.media.search+json; version=2.0.0",
+}
+MEDIA_HEADERS = {
+    "Accept": "application/vnd.gopro.jk.media+json; version=2.0.0",
+}
+
+MEDIA_FIELDS = ",".join([
+    "camera_model", "captured_at", "content_title", "content_type",
+    "created_at", "filename", "file_extension", "file_size", "height",
+    "id", "item_count", "orientation", "ready_to_view", "resolution",
+    "source_duration", "type", "width",
+])
+MEDIA_TYPES = ",".join([
+    "Burst", "BurstVideo", "Continuous", "LoopedVideo",
+    "Photo", "TimeLapse", "TimeLapseVideo", "Video",
+])
+
 
 class APIError(Exception):
     pass
@@ -23,7 +41,11 @@ async def list_media(
     """Fetch a page of media items. Returns (items, total_count)."""
     resp = await client.get(
         f"{BASE_URL}/media/search",
+        headers=SEARCH_HEADERS,
         params={
+            "processing_states": "ready",
+            "fields": MEDIA_FIELDS,
+            "type": MEDIA_TYPES,
             "per_page": per_page,
             "page": page,
             "order_by": "captured_at",
@@ -88,7 +110,7 @@ async def list_all_media(client: httpx.AsyncClient) -> AsyncIterator[MediaItem]:
 
 async def get_download_url(client: httpx.AsyncClient, media_id: str) -> str:
     """Get the signed S3 download URL for a media item."""
-    resp = await client.get(f"{BASE_URL}/media/{media_id}/download")
+    resp = await client.get(f"{BASE_URL}/media/{media_id}/download", headers=MEDIA_HEADERS)
     if resp.status_code == 404:
         raise APIError(f"Media {media_id} not found in cloud")
     if resp.status_code == 429:
