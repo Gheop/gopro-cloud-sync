@@ -4,7 +4,10 @@ from pathlib import Path
 
 from .models import TokenData
 
-CONFIG_DIR = Path(os.environ.get("XDG_CONFIG_HOME", Path.home() / ".config")) / "gopro-cloud-sync"
+CONFIG_DIR = (
+    Path(os.environ.get("XDG_CONFIG_HOME", Path.home() / ".config"))
+    / "gopro-cloud-sync"
+)
 CONFIG_FILE = CONFIG_DIR / "config.json"
 
 

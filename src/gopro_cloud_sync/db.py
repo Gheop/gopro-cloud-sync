@@ -5,7 +5,10 @@ from pathlib import Path
 
 from .models import MediaItem
 
-DATA_DIR = Path(os.environ.get("XDG_DATA_HOME", Path.home() / ".local" / "share")) / "gopro-cloud-sync"
+DATA_DIR = (
+    Path(os.environ.get("XDG_DATA_HOME", Path.home() / ".local" / "share"))
+    / "gopro-cloud-sync"
+)
 DB_FILE = DATA_DIR / "sync.db"
 
 SCHEMA = """
@@ -71,7 +74,9 @@ class SyncDB:
         return items
 
     def mark_downloading(self, media_id: str) -> None:
-        self.conn.execute("UPDATE media SET status = 'downloading' WHERE id = ?", (media_id,))
+        self.conn.execute(
+            "UPDATE media SET status = 'downloading' WHERE id = ?", (media_id,)
+        )
         self.conn.commit()
 
     def mark_done(self, media_id: str, local_path: str) -> None:
@@ -90,7 +95,9 @@ class SyncDB:
         self.conn.commit()
 
     def get_stats(self) -> dict[str, int]:
-        rows = self.conn.execute("SELECT status, COUNT(*) FROM media GROUP BY status").fetchall()
+        rows = self.conn.execute(
+            "SELECT status, COUNT(*) FROM media GROUP BY status"
+        ).fetchall()
         stats = {"total": 0, "pending": 0, "downloading": 0, "done": 0, "error": 0}
         for status, count in rows:
             stats[status] = count
@@ -98,10 +105,14 @@ class SyncDB:
         return stats
 
     def is_downloaded(self, media_id: str) -> bool:
-        row = self.conn.execute("SELECT status FROM media WHERE id = ?", (media_id,)).fetchone()
+        row = self.conn.execute(
+            "SELECT status FROM media WHERE id = ?", (media_id,)
+        ).fetchone()
         return row is not None and row[0] == "done"
 
     def reset_all(self) -> int:
-        cursor = self.conn.execute("UPDATE media SET status = 'pending', error_msg = NULL WHERE status != 'pending'")
+        cursor = self.conn.execute(
+            "UPDATE media SET status = 'pending', error_msg = NULL WHERE status != 'pending'"
+        )
         self.conn.commit()
         return cursor.rowcount

@@ -20,7 +20,9 @@ class TwoFactorRequired(AuthError):
     pass
 
 
-async def login_password(email: str, password: str, client: httpx.AsyncClient) -> TokenData:
+async def login_password(
+    email: str, password: str, client: httpx.AsyncClient
+) -> TokenData:
     resp = await client.post(
         OAUTH_URL,
         data={
@@ -83,7 +85,7 @@ def _decode_jwt_exp(token_str: str) -> float:
             payload += "=" * padding
         decoded = json.loads(base64.urlsafe_b64decode(payload))
         return float(decoded["exp"])
-    except (IndexError, KeyError, ValueError, json.JSONDecodeError):
+    except IndexError, KeyError, ValueError, json.JSONDecodeError:
         return time.time() + 3600
 
 

@@ -6,6 +6,7 @@ from rich.progress import (
     BarColumn,
     DownloadColumn,
     Progress,
+    TaskID,
     TextColumn,
     TimeRemainingColumn,
     TransferSpeedColumn,
@@ -30,7 +31,7 @@ async def download_one(
     output_dir: Path,
     db: SyncDB,
     progress: Progress,
-    task_id: int,
+    task_id: TaskID,
     max_retries: int = 3,
 ) -> bool:
     dest = compute_dest_path(item, output_dir)
@@ -39,7 +40,9 @@ async def download_one(
 
     if dest.exists():
         db.mark_done(item.id, str(dest))
-        progress.update(task_id, completed=item.file_size or 1, total=item.file_size or 1)
+        progress.update(
+            task_id, completed=item.file_size or 1, total=item.file_size or 1
+        )
         return True
 
     db.mark_downloading(item.id)
@@ -55,12 +58,18 @@ async def download_one(
                 existing_size = part.stat().st_size
                 headers["Range"] = f"bytes={existing_size}-"
 
-            async with client.stream("GET", url, headers=headers, follow_redirects=True) as resp:
+            async with client.stream(
+                "GET", url, headers=headers, follow_redirects=True
+            ) as resp:
                 if resp.status_code == 416:
                     # Range not satisfiable = file is complete
                     part.rename(dest)
                     db.mark_done(item.id, str(dest))
-                    progress.update(task_id, completed=item.file_size or 1, total=item.file_size or 1)
+                    progress.update(
+                        task_id,
+                        completed=item.file_size or 1,
+                        total=item.file_size or 1,
+                    )
                     return True
 
                 if resp.status_code == 200 and existing_size > 0:
@@ -114,7 +123,7 @@ async def download_all(
         TimeRemainingColumn(),
     )
 
-    async def _download(item: MediaItem, task_id: int) -> bool:
+    async def _download(item: MediaItem, task_id: TaskID) -> bool:
         async with sem:
             return await download_one(client, item, output_dir, db, progress, task_id)
 

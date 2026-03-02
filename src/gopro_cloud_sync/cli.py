@@ -19,7 +19,9 @@ def _get_authenticated_token():
     """Load token from config, fail with helpful message if missing."""
     token = config.get_token()
     if not token:
-        console.print("[red]Not logged in.[/red] Run [bold]gopro-sync login[/bold] or [bold]gopro-sync login-token <TOKEN>[/bold]")
+        console.print(
+            "[red]Not logged in.[/red] Run [bold]gopro-sync login[/bold] or [bold]gopro-sync login-token <TOKEN>[/bold]"
+        )
         sys.exit(1)
     return token
 
@@ -54,7 +56,9 @@ def main():
 
 @main.command()
 @click.option("--email", prompt="Email", help="GoPro account email")
-@click.option("--password", prompt="Password", hide_input=True, help="GoPro account password")
+@click.option(
+    "--password", prompt="Password", hide_input=True, help="GoPro account password"
+)
 def login(email, password):
     """Authenticate with email and password."""
 
@@ -96,8 +100,12 @@ def logout():
 
 
 @main.command()
-@click.option("-o", "--output", default="~/GoPro", show_default=True, help="Download directory")
-@click.option("-c", "--concurrency", default=5, show_default=True, help="Parallel downloads")
+@click.option(
+    "-o", "--output", default="~/GoPro", show_default=True, help="Download directory"
+)
+@click.option(
+    "-c", "--concurrency", default=5, show_default=True, help="Parallel downloads"
+)
 @click.option("--dry-run", is_flag=True, help="List what would be downloaded")
 def sync(output, concurrency, dry_run):
     """Sync all GoPro cloud media to local storage."""
@@ -138,7 +146,9 @@ async def _sync(output: str, concurrency: int, dry_run: bool):
             stats = db.get_stats()
 
             if not pending:
-                console.print(f"[green]Already up to date![/green] ({stats['done']} items synced)")
+                console.print(
+                    f"[green]Already up to date![/green] ({stats['done']} items synced)"
+                )
                 return
 
             total_size = sum(i.file_size for i in pending)
@@ -151,18 +161,26 @@ async def _sync(output: str, concurrency: int, dry_run: bool):
             if dry_run:
                 console.print("\n[yellow]Dry run — nothing downloaded.[/yellow]")
                 for item in pending[:20]:
-                    console.print(f"  {item.media_type:10s} {item.capture_time:%Y-%m-%d %H:%M}  {item.filename}")
+                    console.print(
+                        f"  {item.media_type:10s} {item.capture_time:%Y-%m-%d %H:%M}  {item.filename}"
+                    )
                 if len(pending) > 20:
                     console.print(f"  ... and {len(pending) - 20} more")
                 return
 
             # Phase 3: Download
-            console.print(f"\nDownloading to [bold]{output_dir}[/bold] ({concurrency} parallel)...\n")
-            success, errors = await download_all(pending, output_dir, client, db, concurrency)
+            console.print(
+                f"\nDownloading to [bold]{output_dir}[/bold] ({concurrency} parallel)...\n"
+            )
+            success, errors = await download_all(
+                pending, output_dir, client, db, concurrency
+            )
 
         console.print(f"\n[green]Done![/green] {success} downloaded, {errors} errors")
         if errors:
-            console.print("Run [bold]gopro-sync sync[/bold] again to retry failed items, or [bold]gopro-sync status[/bold] to inspect.")
+            console.print(
+                "Run [bold]gopro-sync sync[/bold] again to retry failed items, or [bold]gopro-sync status[/bold] to inspect."
+            )
     finally:
         db.close()
 
@@ -183,7 +201,9 @@ def status():
     table.add_row("Total", str(stats["total"]))
     table.add_row("Downloaded", str(stats["done"]), style="green")
     table.add_row("Pending", str(stats["pending"]), style="yellow")
-    table.add_row("Errors", str(stats["error"]), style="red" if stats["error"] else "dim")
+    table.add_row(
+        "Errors", str(stats["error"]), style="red" if stats["error"] else "dim"
+    )
     table.add_row("In progress", str(stats["downloading"]), style="blue")
 
     console.print(table)
@@ -205,9 +225,10 @@ def reset(force):
     console.print(f"Reset {count} items to pending.")
 
 
-def _format_size(size_bytes: int) -> str:
+def _format_size(n: int) -> str:
+    size: float = float(n)
     for unit in ("B", "KB", "MB", "GB", "TB"):
-        if size_bytes < 1024:
-            return f"{size_bytes:.1f} {unit}"
-        size_bytes /= 1024
-    return f"{size_bytes:.1f} PB"
+        if size < 1024:
+            return f"{size:.1f} {unit}"
+        size /= 1024
+    return f"{size:.1f} PB"
